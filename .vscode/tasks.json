@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CMake Build Only",
+      "type": "shell",
+      "command": "\"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvars64.bat\" && cmake --build ${workspaceFolder}/build --target MapleLeafMain --config Debug",
+      "options": {
+        "shell": {
+          "executable": "cmd.exe",
+          "args": ["/C"]
+        }
+      },
+      "group": "build",
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Run Executable",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/MapleLeafMain.exe",
+      "options": {
+        "shell": {
+          "executable": "powershell.exe",
+          "args": ["-NoProfile", "-Command"]
+        }
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake Build and Run without clean",
+      "dependsOrder": "sequence",
+      "dependsOn": ["CMake Build Only", "Run Executable"],
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
