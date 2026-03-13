@@ -3,7 +3,6 @@
 #include <iostream>
 #include "Engine/Core/shader.h"
 #include "Engine/RHI/vertex_array.h"
-#include "Engine/RHI/vertex_buffer.h"
 #include "Engine/RHI/vertex_layout.h"
 #include "Engine/Renderer/renderer.h"
 #include "Engine/Renderer/mesh.h"
@@ -46,38 +45,46 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+        -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 1.0f
     };
 
     VertexLayout layout;
-    layout.addFloat(0, 3, GL_FALSE);
-    layout.addFloat(1, 3, GL_FALSE);
+    layout.addFloat(0, 3, GL_FALSE); // position3
+    layout.addFloat(1, 3, GL_FALSE); // color3
+    layout.addFloat(2, 2, GL_FALSE); // texcoord2
     Mesh mesh(vertices, sizeof(vertices), 3, layout);
 
     const char* vertexShaderSource = R"(
 #version 460 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aColor;
+layout (location = 2) in vec2 aTexCoord;
 out vec3 ourColor;
+out vec2 TexCoord;
 void main() {
     gl_Position = vec4(aPos, 1.0);
     ourColor = aColor;
+    TexCoord = aTexCoord;
 }
 )";
 
     const char* fragmentShaderSource = R"(
 #version 460 core
+uniform sampler2D uTexture;
 in vec3 ourColor;
+in vec2 TexCoord;
 out vec4 FragColor;
 void main() {
-    FragColor = vec4(ourColor, 1.0);
+    FragColor = texture(uTexture, TexCoord) * vec4(ourColor, 1.0);
 }
 )";
 
+    Texture texture("res/engine/images/maid_aris.png");
     Shader shader(vertexShaderSource, fragmentShaderSource);
     Material material(shader);
+    material.setTexture("uTexture", texture, 0);
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();

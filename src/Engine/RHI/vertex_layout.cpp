@@ -2,10 +2,11 @@
 
 bool VertexLayout::addFloat(GLuint index, GLuint count, GLboolean normalized)
 {
+#ifdef DEBUG
     if (hasAttribute(index) || (index >= GL_MAX_VERTEX_ATTRIBS) || count == 0) {
         return false;
     }
-
+#endif
     VertexAttribute attr;
     attr.index = index;
     attr.count = count;

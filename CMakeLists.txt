@@ -12,6 +12,7 @@ target_include_directories(ProjectCommon
 	INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src
 	INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/dep/glfw/include
 	INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/dep/glad/include
+    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/dep/stb_image/include
 )
 
 find_package(OpenGL REQUIRED)
