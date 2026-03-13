@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <unordered_map>
+#include <unordered_set>
 
 class Shader
 {
@@ -16,7 +18,11 @@ public:
 
     template<typename T>
     void setUniform(std::string_view name, const T& value) const {
-        GLint loc = glGetUniformLocation(m_programID, std::string(name).c_str());
+        const GLint loc = getUniformLocation(name);
+        if (loc == -1) {
+            return;
+        }
+        
         if constexpr (std::is_same_v<T, int>)
             glUniform1i(loc, value);
         else if constexpr (std::is_same_v<T, float>)
@@ -32,7 +38,13 @@ public:
         else
             static_assert(!sizeof(T), "Unsupported uniform type");
     }
+
+private:
+    GLint getUniformLocation(std::string_view name) const;
+    void logMissingUniform(std::string_view name) const;
+
 private:
     GLuint m_programID = 0;
-
+    mutable std::unordered_map<std::string, GLint> m_uniformLocations;
+    mutable std::unordered_set<std::string> m_missingUniformWarnings;
 };

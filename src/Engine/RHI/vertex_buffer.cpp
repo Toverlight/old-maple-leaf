@@ -8,6 +8,10 @@ VertexBuffer::~VertexBuffer() {
     glDeleteBuffers(1, &m_VBO);
 }
 
+VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept : m_VBO(other.m_VBO) {
+    other.m_VBO = 0;
+}
+
 void VertexBuffer::bind() const {
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 }

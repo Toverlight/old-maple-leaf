@@ -2,35 +2,143 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "CMake Build Only",
-      "type": "shell",
-      "command": "\"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvars64.bat\" && cmake --build ${workspaceFolder}/build --target MapleLeafMain --config Debug",
-      "options": {
-        "shell": {
-          "executable": "cmd.exe",
-          "args": ["/C"]
-        }
-      },
-      "group": "build",
-      "problemMatcher": ["$msCompile"]
-    },
-    {
-      "label": "Run Executable",
-      "type": "shell",
-      "command": "${workspaceFolder}/build/MapleLeafMain.exe",
-      "options": {
-        "shell": {
-          "executable": "powershell.exe",
-          "args": ["-NoProfile", "-Command"]
-        }
-      },
+      "label": "CMake Configure Debug",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/Invoke-MsvcCommand.ps1",
+        "-CommandLine",
+        "cmake --preset debug"
+      ],
       "group": "build",
       "problemMatcher": []
     },
     {
-      "label": "CMake Build and Run without clean",
+      "label": "CMake Build Debug",
+      "type": "process",
+      "dependsOn": ["CMake Configure Debug"],
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/Invoke-MsvcCommand.ps1",
+        "-CommandLine",
+        "cmake --build --preset debug"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Run Debug",
+      "type": "process",
+      "dependsOn": ["CMake Build Debug"],
+      "command": "${workspaceFolder}/build/debug/${workspaceFolderBasename}.exe",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake Build and Run Debug",
       "dependsOrder": "sequence",
-      "dependsOn": ["CMake Build Only", "Run Executable"],
+      "dependsOn": ["Run Debug"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake Clean Debug",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "if (Test-Path \"${workspaceFolder}/build/debug\") { Remove-Item \"${workspaceFolder}/build/debug\" -Recurse -Force }"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake Configure Release",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/Invoke-MsvcCommand.ps1",
+        "-CommandLine",
+        "cmake --preset release"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake Build Release",
+      "type": "process",
+      "dependsOn": ["CMake Configure Release"],
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/Invoke-MsvcCommand.ps1",
+        "-CommandLine",
+        "cmake --build --preset release"
+      ],
+      "group": "build",
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Run Release",
+      "type": "process",
+      "dependsOn": ["CMake Build Release"],
+      "command": "${workspaceFolder}/build/release/${workspaceFolderBasename}.exe",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake Build and Run Release",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Run Release"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake Clean Release",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "if (Test-Path \"${workspaceFolder}/build/release\") { Remove-Item \"${workspaceFolder}/build/release\" -Recurse -Force }"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake Clean All",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "if (Test-Path \"${workspaceFolder}/build\") { Get-ChildItem \"${workspaceFolder}/build\" -Directory | Remove-Item -Recurse -Force }"
+      ],
       "group": "build",
       "problemMatcher": []
     }

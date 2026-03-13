@@ -4,7 +4,10 @@
 #include "Engine/Core/shader.h"
 #include "Engine/RHI/vertex_array.h"
 #include "Engine/RHI/vertex_buffer.h"
+#include "Engine/RHI/vertex_layout.h"
 #include "Engine/Renderer/renderer.h"
+#include "Engine/Renderer/mesh.h"
+#include "Engine/Renderer/material.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -48,16 +51,10 @@ int main() {
         0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f
     };
 
-    VertexArray VAO;
-    VAO.bind();
-    VertexBuffer VBO;
-    VBO.bind();
-    VBO.setData(sizeof(vertices), vertices, GL_STATIC_DRAW);
-    VAO.addAttribute(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    VAO.addAttribute(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-
-    VBO.unbind();
-    VAO.unbind();
+    VertexLayout layout;
+    layout.addFloat(0, 3, GL_FALSE);
+    layout.addFloat(1, 3, GL_FALSE);
+    Mesh mesh(vertices, sizeof(vertices), 3, layout);
 
     const char* vertexShaderSource = R"(
 #version 460 core
@@ -80,16 +77,14 @@ void main() {
 )";
 
     Shader shader(vertexShaderSource, fragmentShaderSource);
+    Material material(shader);
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         processInput(window);
 
         Renderer::Clear();
-        
-        shader.use();
-        VAO.bind();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        Renderer::Submit(mesh, material);
 
         glfwSwapBuffers(window);
     }

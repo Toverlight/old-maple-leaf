@@ -37,6 +37,7 @@ Shader::Shader(std::string_view vertexSource, std::string_view fragmentSource) {
         char infoLog[512];
         glGetProgramInfoLog(m_programID, 512, nullptr, infoLog);
         std::cerr << "Shader Program Linking Failed:\n" << infoLog << std::endl;
+        m_programID = 0;
     }
 
     glDeleteShader(vertexShader);
@@ -49,4 +50,33 @@ Shader::~Shader() {
 
 void Shader::use() const {
     glUseProgram(m_programID);
+}
+
+GLint Shader::getUniformLocation(std::string_view name) const {
+    const std::string uniformName(name);
+
+    const auto it = m_uniformLocations.find(uniformName);
+    if (it != m_uniformLocations.end()) {
+        return it->second;
+    }
+    
+    const GLint location = glGetUniformLocation(m_programID, uniformName.c_str());
+    m_uniformLocations.emplace(uniformName, location);
+
+    if (location == -1) {
+        logMissingUniform(uniformName);
+    }
+
+    return location;
+}
+
+void Shader::logMissingUniform(std::string_view name) const {
+#ifdef DEBUG
+    const std::string uniformName(name);
+
+    if (m_missingUniformWarnings.find(uniformName) == m_missingUniformWarnings.end()) {
+        m_missingUniformWarnings.insert(uniformName);
+        std::cerr << "Warning: Uniform '" << uniformName << "' not found in shader program " << m_programID << std::endl;
+    }
+#endif
 }

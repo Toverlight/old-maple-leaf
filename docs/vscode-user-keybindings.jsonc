@@ -1,0 +1,53 @@
+[
+  {
+    // Start current debug configuration
+    "key": "ctrl+alt+1",
+    "command": "workbench.action.debug.start",
+  },
+  {
+    // Stop debugging
+    "key": "ctrl+alt+2",
+    "command": "workbench.action.debug.stop",
+  },
+  {
+    // Restart debugging
+    "key": "ctrl+alt+3",
+    "command": "workbench.action.debug.restart",
+  },
+  {
+    // Debug build
+    "key": "ctrl+alt+4",
+    "command": "workbench.action.tasks.runTask",
+    "args": "CMake Build Debug",
+  },
+  {
+    // Debug run
+    "key": "ctrl+alt+5",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Run Debug",
+  },
+  {
+    // Debug clean only
+    "key": "ctrl+alt+6",
+    "command": "workbench.action.tasks.runTask",
+    "args": "CMake Clean Debug",
+  },
+  {
+    // Release build
+    "key": "ctrl+alt+7",
+    "command": "workbench.action.tasks.runTask",
+    "args": "CMake Build Release",
+  },
+  {
+    // Release run
+    "key": "ctrl+alt+8",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Run Release",
+  },
+  {
+    // Clean all build outputs
+    "key": "ctrl+alt+9",
+    "command": "workbench.action.tasks.runTask",
+    "args": "CMake Clean All",
+  },
+]

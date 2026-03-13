@@ -1,5 +1,8 @@
 {
+  "terminal.integrated.shellIntegration.enabled": true,
+  "cmake.useCMakePresets": "always",
   "C_Cpp.intelliSenseEngine": "disabled",
   "C_Cpp.errorSquiggles": "disabled",
-  "cSpell.words": ["glfw", "Lsizei", "Lsizeiptr"]
+  "workspaceKeybindings.myAwesomeTask.enabled": true,
+  "cSpell.words": ["glfw"]
 }
