@@ -1,11 +1,15 @@
 #include "shader.h"
 #include <iostream>
+#include "Engine/Core/gl_debug.h"
 
 Shader::Shader(std::string_view vertexSource, std::string_view fragmentSource) {
+    ML_GL_SCOPE("Shader::Shader");
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     const char* vSrc = vertexSource.data();
     glShaderSource(vertexShader, 1, &vSrc, nullptr);
     glCompileShader(vertexShader);
+
+    ML_GL_CHECKPOINT("Compile vertex shader");
 
     GLint success;
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
@@ -20,6 +24,8 @@ Shader::Shader(std::string_view vertexSource, std::string_view fragmentSource) {
     glShaderSource(fragmentShader, 1, &fSrc, nullptr);
     glCompileShader(fragmentShader);
 
+    ML_GL_CHECKPOINT("Compile fragment shader");
+
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success) {
         char infoLog[512];
@@ -31,6 +37,9 @@ Shader::Shader(std::string_view vertexSource, std::string_view fragmentSource) {
     glAttachShader(m_programID, vertexShader);
     glAttachShader(m_programID, fragmentShader);
     glLinkProgram(m_programID);
+
+    ML_GL_LABEL(GL_PROGRAM, m_programID, "ShaderProgram");
+    ML_GL_CHECKPOINT("Link shader program");
 
     glGetProgramiv(m_programID, GL_LINK_STATUS, &success);
     if (!success) {

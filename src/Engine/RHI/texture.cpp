@@ -2,6 +2,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <iostream>
+#include "Engine/Core/gl_debug.h"
 
 Texture::Texture(std::string_view path)
 {
@@ -10,6 +11,10 @@ Texture::Texture(std::string_view path)
     if (m_textureID == 0) {
         std::cerr << "Failed to generate texture for: " << path << std::endl;
     }
+#endif
+
+#ifdef DEBUG
+    ML_GL_LABEL(GL_TEXTURE, m_textureID, std::string(path).c_str());
 #endif
     glBindTexture(GL_TEXTURE_2D, m_textureID);
 
@@ -34,6 +39,8 @@ Texture::Texture(std::string_view path)
         }
         glTexImage2D(GL_TEXTURE_2D, 0, format, m_width, m_height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
+
+        ML_GL_CHECKPOINT("Texture upload+mipmap");
     } else {
         std::cerr << "Failed to load texture: " << path << std::endl;
     }

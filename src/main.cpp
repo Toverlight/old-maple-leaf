@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "Engine/Core/shader.h"
+#include "Engine/Core/gl_debug.h"
 #include "Engine/RHI/vertex_array.h"
 #include "Engine/RHI/vertex_layout.h"
 #include "Engine/Renderer/renderer.h"
@@ -25,6 +26,9 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef DEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif
 
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "MapleLeaf", NULL, NULL);
     if (!window) {
@@ -40,6 +44,10 @@ int main() {
         glfwTerminate();
         return -1;
     }
+#ifdef DEBUG
+    GLDebug::SetupDebugOutput();
+    ML_GL_CHECKPOINT("After GL init");
+#endif
 
     glViewport(0, 0, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);

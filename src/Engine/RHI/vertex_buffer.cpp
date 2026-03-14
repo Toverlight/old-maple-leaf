@@ -1,4 +1,5 @@
 #include "vertex_buffer.h"
+#include "Engine/Core/gl_debug.h"
 
 VertexBuffer::VertexBuffer() {
     glGenBuffers(1, &m_VBO);
@@ -22,4 +23,5 @@ void VertexBuffer::unbind() const {
 
 void VertexBuffer::setData(GLsizeiptr size, const void* data, GLenum usage) const {
     glBufferData(GL_ARRAY_BUFFER, size, data, usage);
+    ML_GL_CHECKPOINT("VertexBuffer::setData");
 }

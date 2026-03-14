@@ -1,7 +1,9 @@
 #include "material.h"
+#include "Engine/Core/gl_debug.h"
 
 void Material::bind() const
 {
+    ML_GL_SCOPE("Material::bind");
     m_shader.use();
     for (const auto& [name, value] : m_uniformValues) {
         std::visit([&](const auto& val) { m_shader.setUniform(name, val); }, value);
@@ -12,6 +14,8 @@ void Material::bind() const
             m_shader.setUniform(name, static_cast<int>(binding.slot));
         }
     }
+
+    ML_GL_CHECKPOINT("Material bind end");
 }
 
 void Material::clear()
