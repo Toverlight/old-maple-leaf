@@ -6,7 +6,8 @@ Shader::Shader(std::string_view vertexSource, std::string_view fragmentSource) {
     ML_GL_SCOPE("Shader::Shader");
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     const char* vSrc = vertexSource.data();
-    glShaderSource(vertexShader, 1, &vSrc, nullptr);
+    GLint vLen = static_cast<GLint>(vertexSource.size());
+    glShaderSource(vertexShader, 1, &vSrc, &vLen);
     glCompileShader(vertexShader);
 
     ML_GL_CHECKPOINT("Compile vertex shader");
@@ -21,7 +22,8 @@ Shader::Shader(std::string_view vertexSource, std::string_view fragmentSource) {
 
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     const char* fSrc = fragmentSource.data();
-    glShaderSource(fragmentShader, 1, &fSrc, nullptr);
+    GLint fLen = static_cast<GLint>(fragmentSource.size());
+    glShaderSource(fragmentShader, 1, &fSrc, &fLen);
     glCompileShader(fragmentShader);
 
     ML_GL_CHECKPOINT("Compile fragment shader");

@@ -8,6 +8,7 @@
 #include "Engine/Renderer/renderer.h"
 #include "Engine/Renderer/mesh.h"
 #include "Engine/Renderer/material.h"
+#include "Engine/Core/file.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -64,30 +65,9 @@ int main() {
     layout.addFloat(2, 2, GL_FALSE); // texcoord2
     Mesh mesh(vertices, sizeof(vertices), 3, layout);
 
-    const char* vertexShaderSource = R"(
-#version 460 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-layout (location = 2) in vec2 aTexCoord;
-out vec3 ourColor;
-out vec2 TexCoord;
-void main() {
-    gl_Position = vec4(aPos, 1.0);
-    ourColor = aColor;
-    TexCoord = aTexCoord;
-}
-)";
+    std::string vertexShaderSource = ReadTextFileUtf8("res/engine/shaders/basic.vert").data;
 
-    const char* fragmentShaderSource = R"(
-#version 460 core
-uniform sampler2D uTexture;
-in vec3 ourColor;
-in vec2 TexCoord;
-out vec4 FragColor;
-void main() {
-    FragColor = texture(uTexture, TexCoord) * vec4(ourColor, 1.0);
-}
-)";
+    std::string fragmentShaderSource = ReadTextFileUtf8("res/engine/shaders/basic.frag").data;
 
     Texture texture("res/engine/images/maid_aris.png");
     Shader shader(vertexShaderSource, fragmentShaderSource);
