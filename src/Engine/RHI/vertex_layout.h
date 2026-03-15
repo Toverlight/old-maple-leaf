@@ -16,6 +16,7 @@ class VertexLayout
 {
 public:
     bool addFloat(GLuint index, GLuint count, GLboolean normalized = GL_FALSE);
+    bool addFloat(GLuint index, GLuint count, std::uint32_t offset, GLsizei stride, GLboolean normalized = GL_FALSE);
 
     bool hasAttribute(GLuint index) const;
     const std::vector<VertexAttribute>& getAttributes() const { return m_attributes; }

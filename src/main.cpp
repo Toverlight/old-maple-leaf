@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <span>
 #include "Engine/Core/shader.h"
 #include "Engine/Core/gl_debug.h"
 #include "Engine/RHI/vertex_array.h"
@@ -8,6 +9,7 @@
 #include "Engine/Renderer/renderer.h"
 #include "Engine/Renderer/mesh.h"
 #include "Engine/Renderer/material.h"
+#include "Engine/Renderer/vertex_types.h"
 #include "Engine/Core/file.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -53,17 +55,25 @@ int main() {
     glViewport(0, 0, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 1.0f
+    // square
+    VertexPU vertices[] = {
+        {-0.5f, -0.5f, 0.0f, 0.0f, 0.0f},
+        { 0.5f, -0.5f, 0.0f, 1.0f, 0.0f},
+        { 0.5f,  0.5f, 0.0f, 1.0f, 1.0f},
+        {-0.5f,  0.5f, 0.0f, 0.0f, 1.0f}
     };
 
-    VertexLayout layout;
-    layout.addFloat(0, 3, GL_FALSE); // position3
-    layout.addFloat(1, 3, GL_FALSE); // color3
-    layout.addFloat(2, 2, GL_FALSE); // texcoord2
-    Mesh mesh(vertices, sizeof(vertices), 3, layout);
+    std::uint32_t indices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    VertexLayout layout = VertexPU::Layout();
+    MeshDesc meshDesc;
+    meshDesc.vertexData = std::as_bytes(std::span(vertices));
+    meshDesc.layout = &layout;
+    meshDesc.indices32 = indices;
+    Mesh mesh(meshDesc);
 
     std::string vertexShaderSource = ReadTextFileUtf8("res/engine/shaders/basic.vert").data;
 

@@ -4,6 +4,16 @@
   "C_Cpp.intelliSenseEngine": "disabled",
   "C_Cpp.errorSquiggles": "disabled",
   "workspaceKeybindings.myAwesomeTask.enabled": true,
-  "cSpell.words": ["aris", "glfw", "Lsizeiptr", "Parameteri", "stbi"],
-  "conventionalCommits.scopes": ["Log", "File"]
+  "cSpell.words": [
+    "aris",
+    "glfw",
+    "Lsizei",
+    "Lsizeiptr",
+    "Parameteri",
+    "PNCU",
+    "Programiv",
+    "Shaderiv",
+    "stbi"
+  ],
+  "conventionalCommits.scopes": ["Log", "File", "Vertex"]
 }
