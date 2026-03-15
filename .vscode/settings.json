@@ -6,14 +6,19 @@
   "workspaceKeybindings.myAwesomeTask.enabled": true,
   "cSpell.words": [
     "aris",
+    "arona",
     "glfw",
+    "Integerv",
     "Lsizei",
     "Lsizeiptr",
     "Parameteri",
     "PNCU",
     "Programiv",
     "Shaderiv",
-    "stbi"
+    "stbi",
+    "Storei",
+    "submesh",
+    "submeshes"
   ],
   "conventionalCommits.scopes": ["Log", "File", "Vertex"]
 }

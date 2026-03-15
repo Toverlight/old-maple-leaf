@@ -3,11 +3,29 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <vector>
 #include "Engine/RHI/index_buffer.h"
 #include "Engine/RHI/vertex_array.h"
 #include "Engine/RHI/vertex_buffer.h"
 
 class VertexLayout;
+
+struct SubMeshDesc
+{
+    GLenum primitive = GL_TRIANGLES;
+
+    // Material slot for higher-level systems (Model/Renderer) to map to a Material.
+    std::uint32_t materialSlot = 0;
+
+    // If indexCount > 0, this submesh is indexed.
+    std::uint32_t firstIndex = 0;
+    std::uint32_t indexCount = 0;
+    std::int32_t baseVertex = 0;
+
+    // If vertexCount > 0 (and indexCount == 0), this submesh is non-indexed.
+    std::uint32_t firstVertex = 0;
+    std::uint32_t vertexCount = 0;
+};
 
 struct MeshDesc
 {
@@ -24,6 +42,24 @@ struct MeshDesc
     std::span<const std::uint32_t> indices32{};
 
     GLenum primitive = GL_TRIANGLES;
+
+    std::span<const SubMeshDesc> subMeshes{};
+};
+
+struct SubMesh
+{
+    GLenum primitive = GL_TRIANGLES;
+
+    bool indexed = false;
+
+    std::uint32_t firstIndex = 0;
+    std::uint32_t indexCount = 0;
+    std::int32_t baseVertex = 0;
+
+    std::uint32_t firstVertex = 0;
+    std::uint32_t vertexCount = 0;
+
+    std::uint32_t materialSlot = 0;
 };
 
 class Mesh
@@ -31,6 +67,9 @@ class Mesh
 public:
     Mesh(const MeshDesc& desc);
     void draw() const;
+
+    std::span<const SubMesh> getSubMeshes() const { return m_subMeshes; }
+    void drawSubMesh(size_t index) const;
 
 private:
     VertexArray m_VAO;
@@ -40,5 +79,7 @@ private:
     int m_indexCount = 0;
     GLenum m_indexType = GL_UNSIGNED_INT;
     GLenum m_primitive = GL_TRIANGLES;
+
+    std::vector<SubMesh> m_subMeshes;
 };
     

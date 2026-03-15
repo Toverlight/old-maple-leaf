@@ -5,6 +5,17 @@
 #include "Engine/Core/gl_debug.h"
 #include "Engine/RHI/vertex_layout.h"
 
+namespace {
+size_t IndexElementSize(GLenum indexType)
+{
+    switch (indexType) {
+    case GL_UNSIGNED_SHORT: return sizeof(std::uint16_t);
+    case GL_UNSIGNED_INT: return sizeof(std::uint32_t);
+    default: return 0;
+    }
+}
+}
+
 Mesh::Mesh(const MeshDesc& desc)
     : m_vertexCount(0)
 {
@@ -106,6 +117,81 @@ Mesh::Mesh(const MeshDesc& desc)
     m_VBO.unbind();
     m_VAO.unbind();
 
+    // Build submesh list (drawcall slices)
+    m_subMeshes.clear();
+    if (!desc.subMeshes.empty()) {
+        m_subMeshes.reserve(desc.subMeshes.size());
+        for (const SubMeshDesc& smd : desc.subMeshes) {
+            const bool wantsIndexed = (smd.indexCount > 0);
+            const bool wantsNonIndexed = (!wantsIndexed && smd.vertexCount > 0);
+
+#ifdef DEBUG
+            assert(!(wantsIndexed && wantsNonIndexed) && "SubMeshDesc cannot be both indexed and non-indexed");
+            if (wantsIndexed) {
+                assert(m_indexCount > 0 && "Indexed SubMeshDesc provided but mesh has no index buffer");
+                assert(static_cast<std::uint64_t>(smd.firstIndex) + static_cast<std::uint64_t>(smd.indexCount)
+                       <= static_cast<std::uint64_t>(m_indexCount) && "SubMeshDesc index range out of bounds");
+            }
+            if (wantsNonIndexed) {
+                assert(static_cast<std::uint64_t>(smd.firstVertex) + static_cast<std::uint64_t>(smd.vertexCount)
+                       <= static_cast<std::uint64_t>(m_vertexCount) && "SubMeshDesc vertex range out of bounds");
+            }
+            assert((wantsIndexed || wantsNonIndexed) && "SubMeshDesc must specify either indexCount>0 or vertexCount>0");
+#endif
+
+            // Release behavior: skip invalid submeshes.
+            if (wantsIndexed) {
+                if (m_indexCount <= 0) {
+                    continue;
+                }
+                const std::uint64_t end = static_cast<std::uint64_t>(smd.firstIndex) + static_cast<std::uint64_t>(smd.indexCount);
+                if (end > static_cast<std::uint64_t>(m_indexCount)) {
+                    continue;
+                }
+
+                SubMesh sm;
+                sm.primitive = smd.primitive;
+                sm.indexed = true;
+                sm.firstIndex = smd.firstIndex;
+                sm.indexCount = smd.indexCount;
+                sm.baseVertex = smd.baseVertex;
+                sm.materialSlot = smd.materialSlot;
+                m_subMeshes.push_back(sm);
+            } else if (wantsNonIndexed) {
+                const std::uint64_t end = static_cast<std::uint64_t>(smd.firstVertex) + static_cast<std::uint64_t>(smd.vertexCount);
+                if (end > static_cast<std::uint64_t>(m_vertexCount)) {
+                    continue;
+                }
+
+                SubMesh sm;
+                sm.primitive = smd.primitive;
+                sm.indexed = false;
+                sm.firstVertex = smd.firstVertex;
+                sm.vertexCount = smd.vertexCount;
+                sm.materialSlot = smd.materialSlot;
+                m_subMeshes.push_back(sm);
+            }
+        }
+    }
+
+    // If no submeshes were provided (or all were invalid), build a default one.
+    if (m_subMeshes.empty()) {
+        SubMesh sm;
+        sm.primitive = desc.primitive;
+        sm.materialSlot = 0;
+        if (m_indexCount > 0) {
+            sm.indexed = true;
+            sm.firstIndex = 0;
+            sm.indexCount = static_cast<std::uint32_t>(m_indexCount);
+            sm.baseVertex = 0;
+        } else {
+            sm.indexed = false;
+            sm.firstVertex = 0;
+            sm.vertexCount = static_cast<std::uint32_t>(m_vertexCount);
+        }
+        m_subMeshes.push_back(sm);
+    }
+
     ML_GL_CHECKPOINT("Mesh setup");
 }
 
@@ -113,16 +199,68 @@ void Mesh::draw() const
 {
     ML_GL_SCOPE("Mesh::draw");
 
-    if (m_vertexCount <= 0) {
+    if (m_vertexCount <= 0 || m_subMeshes.empty()) {
         return;
     }
 
     m_VAO.bind();
-    if (m_indexCount > 0) {
-        glDrawElements(m_primitive, m_indexCount, m_indexType, nullptr);
-        ML_GL_CHECKPOINT("glDrawElements");
+    const size_t indexElemSize = IndexElementSize(m_indexType);
+    for (const SubMesh& subMesh : m_subMeshes) {
+        if (subMesh.indexed) {
+            if (subMesh.indexCount == 0) {
+                continue;
+            }
+            const void* indexOffset = reinterpret_cast<const void*>(static_cast<std::uintptr_t>(subMesh.firstIndex) * indexElemSize);
+            if (subMesh.baseVertex != 0) {
+                glDrawElementsBaseVertex(subMesh.primitive, static_cast<GLsizei>(subMesh.indexCount), m_indexType, indexOffset,
+                                         static_cast<GLint>(subMesh.baseVertex));
+                ML_GL_CHECKPOINT("glDrawElementsBaseVertex");
+            } else {
+                glDrawElements(subMesh.primitive, static_cast<GLsizei>(subMesh.indexCount), m_indexType, indexOffset);
+                ML_GL_CHECKPOINT("glDrawElements");
+            }
+        } else {
+            if (subMesh.vertexCount == 0) {
+                continue;
+            }
+            glDrawArrays(subMesh.primitive, static_cast<GLint>(subMesh.firstVertex), static_cast<GLsizei>(subMesh.vertexCount));
+            ML_GL_CHECKPOINT("glDrawArrays");
+        }
+    }
+    m_VAO.unbind();
+}
+
+void Mesh::drawSubMesh(size_t index) const
+{
+    ML_GL_SCOPE("Mesh::drawSubMesh");
+
+    if (index >= m_subMeshes.size()) {
+        return;
+    }
+
+    const SubMesh& subMesh = m_subMeshes[index];
+    m_VAO.bind();
+    if (subMesh.indexed) {
+        if (subMesh.indexCount == 0) {
+            m_VAO.unbind();
+            return;
+        }
+        const size_t indexElemSize = IndexElementSize(m_indexType);
+        const void* indexOffset = reinterpret_cast<const void*>(static_cast<std::uintptr_t>(subMesh.firstIndex) * indexElemSize);
+        if (subMesh.baseVertex != 0) {
+            glDrawElementsBaseVertex(subMesh.primitive, static_cast<GLsizei>(subMesh.indexCount), m_indexType, indexOffset,
+                                     static_cast<GLint>(subMesh.baseVertex));
+            ML_GL_CHECKPOINT("glDrawElementsBaseVertex");
+        } else {
+            glDrawElements(subMesh.primitive, static_cast<GLsizei>(subMesh.indexCount), m_indexType, indexOffset);
+            ML_GL_CHECKPOINT("glDrawElements");
+        }
     } else {
-        glDrawArrays(m_primitive, 0, static_cast<GLsizei>(m_vertexCount));
+        if (subMesh.vertexCount == 0) {
+            m_VAO.unbind();
+            return;
+        }
+        glDrawArrays(subMesh.primitive, static_cast<GLint>(subMesh.firstVertex), static_cast<GLsizei>(subMesh.vertexCount));
         ML_GL_CHECKPOINT("glDrawArrays");
     }
     m_VAO.unbind();

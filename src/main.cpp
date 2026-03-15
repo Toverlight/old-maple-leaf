@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <array>
 #include <iostream>
 #include <span>
 #include "Engine/Core/shader.h"
@@ -68,28 +69,36 @@ int main() {
         2, 3, 0
     };
 
+    SubMeshDesc subMeshes[] = {
+        {.materialSlot = 0, .firstIndex = 0, .indexCount = 3},
+        {.materialSlot = 1, .firstIndex = 3, .indexCount = 3},
+    };
+
     VertexLayout layout = VertexPU::Layout();
     MeshDesc meshDesc;
     meshDesc.vertexData = std::as_bytes(std::span(vertices));
     meshDesc.layout = &layout;
     meshDesc.indices32 = indices;
+    meshDesc.subMeshes = subMeshes;
     Mesh mesh(meshDesc);
 
     std::string vertexShaderSource = ReadTextFileUtf8("res/engine/shaders/basic.vert").data;
 
     std::string fragmentShaderSource = ReadTextFileUtf8("res/engine/shaders/basic.frag").data;
 
-    Texture texture("res/engine/images/maid_aris.png");
+    Texture textureAris("res/engine/images/maid_aris.png");
+    Texture textureArona("res/engine/images/arona.png");
     Shader shader(vertexShaderSource, fragmentShaderSource);
-    Material material(shader);
-    material.setTexture("uTexture", texture, 0);
+    std::array<Material, 2> materials = { Material(&shader), Material(&shader) };
+    materials[0].setTexture("uTexture", textureAris, 0);
+    materials[1].setTexture("uTexture", textureArona, 0);
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         processInput(window);
 
         Renderer::Clear();
-        Renderer::Submit(mesh, material);
+        Renderer::Submit(mesh, materials);
 
         glfwSwapBuffers(window);
     }

@@ -4,14 +4,15 @@
 void Material::bind() const
 {
     ML_GL_SCOPE("Material::bind");
-    m_shader.use();
+    if (!m_shader) { return; }
+    m_shader->use();
     for (const auto& [name, value] : m_uniformValues) {
-        std::visit([&](const auto& val) { m_shader.setUniform(name, val); }, value);
+        std::visit([&](const auto& val) { m_shader->setUniform(name, val); }, value);
     }
     for (const auto& [name, binding] : m_textureBindings) {
         if (binding.texture) {
             binding.texture->bind(binding.slot);
-            m_shader.setUniform(name, static_cast<int>(binding.slot));
+            m_shader->setUniform(name, static_cast<int>(binding.slot));
         }
     }
 

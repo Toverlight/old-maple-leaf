@@ -6,6 +6,8 @@
 
 Texture::Texture(std::string_view path)
 {
+    const std::string pathStr(path);
+
     glGenTextures(1, &m_textureID);
 #ifdef DEBUG
     if (m_textureID == 0) {
@@ -14,7 +16,7 @@ Texture::Texture(std::string_view path)
 #endif
 
 #ifdef DEBUG
-    ML_GL_LABEL(GL_TEXTURE, m_textureID, std::string(path).c_str());
+    ML_GL_LABEL(GL_TEXTURE, m_textureID, pathStr.c_str());
 #endif
     glBindTexture(GL_TEXTURE_2D, m_textureID);
 
@@ -24,21 +26,31 @@ Texture::Texture(std::string_view path)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load(path.data(), &m_width, &m_height, &m_channels, 0);
+    unsigned char* data = stbi_load(pathStr.c_str(), &m_width, &m_height, &m_channels, 0);
     if (data) {
         GLenum format;
+        GLenum internalFormat;
         switch (m_channels) {
-            case 1: format = GL_RED; break;
-            case 3: format = GL_RGB; break;
-            case 4: format = GL_RGBA; break;
+            case 1: format = GL_RED; internalFormat = GL_R8; break;
+            case 3: format = GL_RGB; internalFormat = GL_RGB8; break;
+            case 4: format = GL_RGBA; internalFormat = GL_RGBA8; break;
             default:
                 std::cerr << "Unsupported number of channels (" << m_channels << ") in texture: " << path << std::endl;
                 stbi_image_free(data);
                 glBindTexture(GL_TEXTURE_2D, 0);
                 return;
         }
-        glTexImage2D(GL_TEXTURE_2D, 0, format, m_width, m_height, 0, format, GL_UNSIGNED_BYTE, data);
+
+        // stb_image returns tightly-packed rows. For RGB (3 bytes/pixel) and R (1 byte/pixel),
+        // OpenGL's default GL_UNPACK_ALIGNMENT=4 can cause row misalignment -> stripes/garbage.
+        GLint prevUnpackAlignment = 4;
+        glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevUnpackAlignment);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, prevUnpackAlignment);
 
         ML_GL_CHECKPOINT("Texture upload+mipmap");
     } else {
