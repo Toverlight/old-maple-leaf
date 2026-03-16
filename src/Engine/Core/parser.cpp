@@ -172,6 +172,8 @@ AppConfig LoadConfig(const std::filesystem::path& filepath)
                 }
             } else if (key == "maxfps") {
                 if (auto v = ParseInt(value)) config.frameConfig.maxFps = std::max(0, *v);
+            } else if (key == "spinwaitus") {
+                if (auto v = ParseInt(value)) config.frameConfig.spinWaitUs = std::clamp(*v, 0, 5000);
             }
             continue;
         }

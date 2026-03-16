@@ -1,10 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <array>
-#include <chrono>
 #include <iostream>
 #include <span>
-#include <thread>
 #include "Engine/Core/shader.h"
 #include "Engine/Core/gl_debug.h"
 #include "Engine/RHI/vertex_array.h"
@@ -15,6 +13,7 @@
 #include "Engine/Renderer/vertex_types.h"
 #include "Engine/Core/file.h"
 #include "Engine/Core/parser.h"
+#include "Engine/Core/frame_pacer.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -115,14 +114,12 @@ int main() {
     materials[0].setTexture("uTexture", textureAris, 0);
     materials[1].setTexture("uTexture", textureArona, 0);
 
-    const bool useManualFpsCap = (config.frameConfig.maxFps > 0) && (config.frameConfig.swapInterval == 0);
-    const auto targetFrameTime = useManualFpsCap
-        ? std::chrono::duration<double>(1.0 / static_cast<double>(config.frameConfig.maxFps))
-        : std::chrono::duration<double>(0);
+    FramePacer framePacer;
+    if (config.frameConfig.swapInterval == 0 && config.frameConfig.maxFps > 0) {
+        framePacer.configure(config.frameConfig.maxFps, config.frameConfig.spinWaitUs);
+    }
 
     while (!glfwWindowShouldClose(window)) {
-        const auto frameStart = std::chrono::steady_clock::now();
-
         glfwPollEvents();
         processInput(window);
 
@@ -130,14 +127,7 @@ int main() {
         Renderer::Submit(mesh, materials);
 
         glfwSwapBuffers(window);
-
-        if (useManualFpsCap) {
-            const auto frameEnd = std::chrono::steady_clock::now();
-            const auto elapsed = frameEnd - frameStart;
-            if (elapsed < targetFrameTime) {
-                std::this_thread::sleep_for(targetFrameTime - elapsed);
-            }
-        }
+        framePacer.pace();
     }
 
     glfwDestroyWindow(window);

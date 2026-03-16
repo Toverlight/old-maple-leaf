@@ -11,14 +11,17 @@
     "Integerv",
     "Lsizei",
     "Lsizeiptr",
+    "maxfps",
     "Parameteri",
     "PNCU",
     "Programiv",
     "Shaderiv",
+    "spinwaitus",
     "stbi",
     "Storei",
     "submesh",
     "submeshes",
+    "swapinterval",
     "vsync"
   ],
   "conventionalCommits.scopes": ["Log", "File", "Vertex", "Config"]
