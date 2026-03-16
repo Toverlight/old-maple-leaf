@@ -14,6 +14,16 @@ enum class FileReadError {
     ReadFailure
 };
 
+inline std::string FileReadErrorToString(FileReadError error) {
+    switch (error) {
+    case FileReadError::None: return "None";
+    case FileReadError::OpenFailed: return "OpenFailed";
+    case FileReadError::TellFailed: return "TellFailed";
+    case FileReadError::ReadFailure: return "ReadFailure";
+    default: return "Unknown";
+    }
+}
+
 template <class T>
 struct _FileReadResult {
     T data{};

@@ -1,8 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <array>
+#include <chrono>
 #include <iostream>
 #include <span>
+#include <thread>
 #include "Engine/Core/shader.h"
 #include "Engine/Core/gl_debug.h"
 #include "Engine/RHI/vertex_array.h"
@@ -12,6 +14,7 @@
 #include "Engine/Renderer/material.h"
 #include "Engine/Renderer/vertex_types.h"
 #include "Engine/Core/file.h"
+#include "Engine/Core/parser.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -23,6 +26,8 @@ void processInput(GLFWwindow* window) {
 }
 
 int main() {
+    const AppConfig config = LoadConfig("MapleLeaf.ini");
+
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
@@ -30,11 +35,27 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    glfwWindowHint(GLFW_RESIZABLE, config.windowConfig.resizable ? GLFW_TRUE : GLFW_FALSE);
 #ifdef DEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "MapleLeaf", NULL, NULL);
+    int windowWidth = config.windowConfig.width;
+    int windowHeight = config.windowConfig.height;
+
+    GLFWmonitor* monitor = nullptr;
+    if (config.windowConfig.fullscreen) {
+        monitor = glfwGetPrimaryMonitor();
+        if (monitor) {
+            if (const GLFWvidmode* mode = glfwGetVideoMode(monitor)) {
+                windowWidth = mode->width;
+                windowHeight = mode->height;
+            }
+        }
+    }
+
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, config.windowConfig.title.c_str(), monitor, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -42,6 +63,7 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(config.frameConfig.swapInterval);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
@@ -53,7 +75,7 @@ int main() {
     ML_GL_CHECKPOINT("After GL init");
 #endif
 
-    glViewport(0, 0, 1920, 1080);
+    glViewport(0, 0, windowWidth, windowHeight);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // square
@@ -93,7 +115,14 @@ int main() {
     materials[0].setTexture("uTexture", textureAris, 0);
     materials[1].setTexture("uTexture", textureArona, 0);
 
+    const bool useManualFpsCap = (config.frameConfig.maxFps > 0) && (config.frameConfig.swapInterval == 0);
+    const auto targetFrameTime = useManualFpsCap
+        ? std::chrono::duration<double>(1.0 / static_cast<double>(config.frameConfig.maxFps))
+        : std::chrono::duration<double>(0);
+
     while (!glfwWindowShouldClose(window)) {
+        const auto frameStart = std::chrono::steady_clock::now();
+
         glfwPollEvents();
         processInput(window);
 
@@ -101,6 +130,14 @@ int main() {
         Renderer::Submit(mesh, materials);
 
         glfwSwapBuffers(window);
+
+        if (useManualFpsCap) {
+            const auto frameEnd = std::chrono::steady_clock::now();
+            const auto elapsed = frameEnd - frameStart;
+            if (elapsed < targetFrameTime) {
+                std::this_thread::sleep_for(targetFrameTime - elapsed);
+            }
+        }
     }
 
     glfwDestroyWindow(window);

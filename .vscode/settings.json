@@ -18,7 +18,8 @@
     "stbi",
     "Storei",
     "submesh",
-    "submeshes"
+    "submeshes",
+    "vsync"
   ],
-  "conventionalCommits.scopes": ["Log", "File", "Vertex"]
+  "conventionalCommits.scopes": ["Log", "File", "Vertex", "Config"]
 }
