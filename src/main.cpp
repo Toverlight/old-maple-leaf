@@ -14,6 +14,8 @@
 #include "Engine/Core/file.h"
 #include "Engine/Core/parser.h"
 #include "Engine/Core/frame_pacer.h"
+#include "Engine/Core/time.h"
+#include "Engine/Core/timer.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -119,7 +121,13 @@ int main() {
         framePacer.configure(config.frameConfig.maxFps, config.frameConfig.spinWaitUs);
     }
 
+    TimeSystem timeSystem;
+    TimerSystem timerSystem;
+
     while (!glfwWindowShouldClose(window)) {
+        timeSystem.beginFrame();
+        timerSystem.update(timeSystem.state());
+
         glfwPollEvents();
         processInput(window);
 
